@@ -9,6 +9,7 @@ namespace NoiseForge.Core
     internal class Engine : GameWindow
     {
         private int VAOTriangle;
+        private Camera camera;
         private int VBOTriangle;
         float[] vertices = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -57,6 +58,7 @@ namespace NoiseForge.Core
         private Vector3 position = new Vector3(0, 0, -5);
         private Vector3 target = Vector3.UnitZ;
         private Shader _modelShader;
+        private bool canRotate;
 
         public Engine(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = new OpenTK.Mathematics.Vector2i(width, height), Title = title })
         {
@@ -67,6 +69,9 @@ namespace NoiseForge.Core
         }
         protected override void OnLoad()
         {
+            camera = new Camera();
+            camera.GetPerspective();
+
             VBOTriangle = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, VBOTriangle);
             GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * vertices.Length, vertices, BufferUsageHint.StaticDraw);
@@ -89,10 +94,8 @@ namespace NoiseForge.Core
             _modelShader.Use();
 
 
-            Matrix4 projectionMatrix = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60), 1, .1f, 100);
-            Matrix4 viewMatrix = Matrix4.CreateTranslation(1, 0, 0) * Matrix4.LookAt(position, position + target, Vector3.UnitY);
-            _modelShader.UniformMatrix4("view", viewMatrix);
-            _modelShader.UniformMatrix4("projection", projectionMatrix);
+            _modelShader.UniformMatrix4("view", camera.GetViewMatrix());
+            _modelShader.UniformMatrix4("projection", camera.projectionMatrix);
             GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
 
 
@@ -105,7 +108,18 @@ namespace NoiseForge.Core
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.Viewport(0, 0, e.Width, e.Height);
         }
+        protected override void OnUpdateFrame(FrameEventArgs args)
+        {
+            var keyboardInput = KeyboardState;
+            var mouseInput = MouseState;
 
+            camera.Update(keyboardInput, mouseInput, args);
+
+        }
+        protected override void OnMouseDown(MouseButtonEventArgs e)
+        {
+
+        }
 
 
     }
