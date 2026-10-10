@@ -139,13 +139,22 @@ namespace NoiseForge.Core
             int Indexx = GL.GetUniformBlockIndex(_modelShader.programLocation, "Matrices");
             GL.UniformBlockBinding(_modelShader.programLocation, Indexx, 0);
 
-
+            ubObject = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
+            GL.BufferData(BufferTarget.UniformBuffer, 4 * Vector4.SizeInBytes * 2, IntPtr.Zero, BufferUsageHint.StaticDraw);
+            GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 0, ubObject);
+            Matrix4 projection = camera.PerspectiveMatrix;
+            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
+            GL.BufferSubData(BufferTarget.UniformBuffer, 0, Vector4.SizeInBytes * 4, ref projection);
+            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
+            Matrix4 viewMatrix = camera.GetViewMatrix();
+            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
+            GL.BufferSubData(BufferTarget.UniformBuffer, Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4, ref viewMatrix);
+            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
 
             int bufferMatrices = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, bufferMatrices);
             GL.BufferData(BufferTarget.ArrayBuffer, 4 * Vector4.SizeInBytes * col * row * depth, modelMatrices, BufferUsageHint.StaticDraw);
-
-
             GL.VertexAttribPointer(2, 4, VertexAttribPointerType.Float, false, 4 * Vector4.SizeInBytes, 0);
             GL.EnableVertexAttribArray(2);
             GL.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, 4 * Vector4.SizeInBytes, Vector4.SizeInBytes * 1);
@@ -172,13 +181,17 @@ namespace NoiseForge.Core
             _modelShader.Use();
             texture0.UseTexture();
 
-            _modelShader.UniformMatrix4("view", camera.GetViewMatrix());
-            _modelShader.UniformMatrix4("projection", camera.PerspectiveMatrix);
+            //_modelShader.UniformMatrix4("view", camera.GetViewMatrix());
+            //_modelShader.UniformMatrix4("projection", camera.PerspectiveMatrix);
 
-            //Matrix4 viewMatrix = camera.GetViewMatrix();
-            //GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
-            //GL.BufferSubData(BufferTarget.UniformBuffer, Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4, ref viewMatrix);
-            //GL.BindBuffer(BufferTarget.UniformBuffer, 0);
+            Matrix4 projection = camera.PerspectiveMatrix;
+            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
+            GL.BufferSubData(BufferTarget.UniformBuffer, 0, Vector4.SizeInBytes * 4, ref projection);
+            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
+            Matrix4 viewMatrix = camera.GetViewMatrix();
+            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
+            GL.BufferSubData(BufferTarget.UniformBuffer, Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4, ref viewMatrix);
+            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
 
             int indexer = 0;
 
