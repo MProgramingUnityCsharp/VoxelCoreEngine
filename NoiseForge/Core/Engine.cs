@@ -6,6 +6,15 @@ namespace NoiseForge.Core
 {
     internal class Engine : GameWindow
     {
+        private int VAOTriangle;
+        private int VBOTriangle;
+        private float[] vertices =
+            {
+            0,0.5f,
+            -.5f,-0.5f,
+            .5f,-0.5f,
+            };
+
         public Engine(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = new OpenTK.Mathematics.Vector2i(width, height), Title = title })
         {
 
@@ -15,7 +24,13 @@ namespace NoiseForge.Core
         }
         protected override void OnLoad()
         {
-
+            VBOTriangle = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, VBOTriangle);
+            GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * vertices.Length, vertices, BufferUsageHint.StaticDraw);
+            VAOTriangle = GL.GenVertexArray();
+            GL.BindVertexArray(VAOTriangle);
+            GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 0, 0);
+            GL.EnableVertexAttribArray(0);
         }
         protected override void OnRenderFrame(FrameEventArgs args)
         {
@@ -23,7 +38,7 @@ namespace NoiseForge.Core
             GL.Clear(ClearBufferMask.ColorBufferBit);
 
 
-
+            GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
 
 
             SwapBuffers();
