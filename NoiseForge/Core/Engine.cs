@@ -90,6 +90,10 @@ namespace NoiseForge.Core
  new Vector3(5, 0, 5),
         };
         private int ubObject;
+        private int depth = 30;
+        private int col = 100;
+        private int row = 100;
+        private Matrix4[] modelMatrices;
 
         public Engine(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = new OpenTK.Mathematics.Vector2i(width, height), Title = title })
         {
@@ -100,7 +104,21 @@ namespace NoiseForge.Core
         }
         protected override void OnLoad()
         {
+            int indexer = 0;
             GL.Enable(EnableCap.DepthTest);
+
+            modelMatrices = new Matrix4[row * col * depth];
+            for (int i = 0; i < col; i++)
+            {
+                for (int j = 0; j < row; j++)
+                {
+                    for (int k = 0; k < depth; k++)
+                    {
+                        modelMatrices[indexer++] = Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(Vector3.UnitX * i) * Matrix4.CreateTranslation(Vector3.UnitZ * j) * Matrix4.CreateTranslation(Vector3.UnitY * k);
+                    }
+                }
+            }
+
 
             camera = new CameraNew.Camera();
             VBOTriangle = GL.GenBuffer();
@@ -121,16 +139,27 @@ namespace NoiseForge.Core
             int Indexx = GL.GetUniformBlockIndex(_modelShader.programLocation, "Matrices");
             GL.UniformBlockBinding(_modelShader.programLocation, Indexx, 0);
 
-            ubObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
-            GL.BufferData(BufferTarget.UniformBuffer, sizeof(float) * 2 * 16, IntPtr.Zero, BufferUsageHint.StaticDraw);
-            GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 0, ubObject);
-            Matrix4 perpectiveMatrix = camera.PerspectiveMatrix;
-            GL.BufferSubData(BufferTarget.UniformBuffer, 0, Vector4.SizeInBytes * 4, ref perpectiveMatrix);
-            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 
 
+            int bufferMatrices = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, bufferMatrices);
+            GL.BufferData(BufferTarget.ArrayBuffer, 4 * Vector4.SizeInBytes * col * row * depth, modelMatrices, BufferUsageHint.StaticDraw);
+
+
+            GL.VertexAttribPointer(2, 4, VertexAttribPointerType.Float, false, 4 * Vector4.SizeInBytes, 0);
+            GL.EnableVertexAttribArray(2);
+            GL.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, 4 * Vector4.SizeInBytes, Vector4.SizeInBytes * 1);
+            GL.EnableVertexAttribArray(3);
+            GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, 4 * Vector4.SizeInBytes, Vector4.SizeInBytes * 2);
+            GL.EnableVertexAttribArray(4);
+            GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, 4 * Vector4.SizeInBytes, Vector4.SizeInBytes * 3);
+            GL.EnableVertexAttribArray(5);
+
+
+            GL.VertexAttribDivisor(2, 1);
+            GL.VertexAttribDivisor(3, 1);
+            GL.VertexAttribDivisor(4, 1);
+            GL.VertexAttribDivisor(5, 1);
 
         }
         protected override void OnRenderFrame(FrameEventArgs args)
@@ -142,21 +171,22 @@ namespace NoiseForge.Core
             GL.BindVertexArray(VAOTriangle);
             _modelShader.Use();
             texture0.UseTexture();
+
             _modelShader.UniformMatrix4("view", camera.GetViewMatrix());
-            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
-            Matrix4 viewMatrix = camera.GetViewMatrix();
-            GL.BufferSubData(BufferTarget.UniformBuffer, Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4, ref viewMatrix);
-            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
+            _modelShader.UniformMatrix4("projection", camera.PerspectiveMatrix);
 
-            for (int i = 0; i < cubePositions.Length; i++)
-            {
-                for (int j = 0; j < cubePositions.Length; j++)
-                {
-                    _modelShader.UniformMatrix4("model", Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(cubePositions[i]) * Matrix4.CreateTranslation(cubePositions[j]));
-                    GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
+            //Matrix4 viewMatrix = camera.GetViewMatrix();
+            //GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
+            //GL.BufferSubData(BufferTarget.UniformBuffer, Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4, ref viewMatrix);
+            //GL.BindBuffer(BufferTarget.UniformBuffer, 0);
 
-                }
-            }
+            int indexer = 0;
+
+            GL.DrawArraysInstanced(PrimitiveType.Triangles, 0, vertices.Length, row * col * depth);
+            //  GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
+
+
+
 
 
             SwapBuffers();
