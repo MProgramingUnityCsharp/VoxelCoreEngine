@@ -7,7 +7,7 @@ namespace NoiseForge
         static void Main(string[] args)
         {
 
-            using (Engine window = new Engine(800, 600, "Game Engine Renderer"))
+            using (Engine window = new Engine(1000, 600, "Game Engine Renderer"))
             {
                 window.Run();
             }

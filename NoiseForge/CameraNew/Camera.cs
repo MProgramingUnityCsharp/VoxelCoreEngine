@@ -18,13 +18,29 @@ namespace NoiseForge.CameraNew
         private float Sensitivity = 300;
         private float pitch;
         private float yaw = -90;
+        private float Pitch
+        {
+            get
+            {
 
+                return pitch;
+            }
+            set
+            {
+                pitch = (float)Math.Clamp(value, -89, 89);
+            }
+        }
         private float Speed = 7.5f;
 
-        public Camera(float fieldOfView = 60f, float aspect = 1f, float near = 0.1f, float far = 100)
+        public Camera(float fieldOfView = 60f, float aspect = 1.77f, float near = 0.1f, float far = 100)
+        {
+            GetPerspectiveMatrix(fieldOfView, aspect, near, far);
+            GetViewMatrix();
+        }
+
+        private void GetPerspectiveMatrix(float fieldOfView, float aspect, float near, float far)
         {
             PerspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(fieldOfView), aspect, near, far);
-            GetViewMatrix();
         }
 
         public Matrix4 GetViewMatrix() => viewMatrix = Matrix4.LookAt(Position, Position + front, up);
@@ -76,7 +92,7 @@ namespace NoiseForge.CameraNew
                     lastPos = new Vector2(mouse.X, mouse.Y);
 
                     yaw += deltaX * Sensitivity * (float)e.Time;
-                    pitch -= deltaY * Sensitivity * (float)e.Time;
+                    Pitch -= deltaY * Sensitivity * (float)e.Time;
 
                 }
 
@@ -98,5 +114,7 @@ namespace NoiseForge.CameraNew
             GetViewMatrix();
 
         }
+
+
     }
 }

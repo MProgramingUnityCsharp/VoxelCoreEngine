@@ -56,6 +56,7 @@ namespace NoiseForge.Core
 };
 
         private Vector3 position = new Vector3(0, 0, -5);
+        private Vector3 modelPosition = new Vector3(0, 0, 1);
         private Vector3 target = Vector3.UnitZ;
         private Shader _modelShader;
         private Texture texture0;
@@ -85,7 +86,7 @@ namespace NoiseForge.Core
 
 
             _modelShader = new Shader("Shaders\\Default.vert", "Shaders\\Default.frag");
-            texture0 = new Texture("wall.jpg");
+            texture0 = new Texture("container.jpg");
             _modelShader.UniformFloat("texture0", 0);
 
         }
@@ -100,7 +101,7 @@ namespace NoiseForge.Core
             texture0.UseTexture();
             _modelShader.UniformMatrix4("view", camera.GetViewMatrix());
             _modelShader.UniformMatrix4("projection", camera.PerspectiveMatrix);
-            _modelShader.UniformMatrix4("model", Matrix4.CreateTranslation(new Vector3(1)));
+            _modelShader.UniformMatrix4("model", Matrix4.CreateScale(2f) * Matrix4.CreateTranslation(modelPosition));
             GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
 
 
