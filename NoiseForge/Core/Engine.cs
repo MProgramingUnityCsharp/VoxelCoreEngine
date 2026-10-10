@@ -56,11 +56,40 @@ namespace NoiseForge.Core
 };
 
         private Vector3 position = new Vector3(0, 0, -5);
-        private Vector3 modelPosition = new Vector3(0, 0, 1);
+        private Vector3 modelPosition = new Vector3(1, 0, 1);
         private Vector3 target = Vector3.UnitZ;
         private Shader _modelShader;
         private Texture texture0;
         private bool canRotate;
+        private Vector3[] cubePositions =
+        {
+ new Vector3(1, 0, 1),
+ new Vector3(2, 0, 1),
+ new Vector3(3, 0, 1),
+ new Vector3(4, 0, 1),
+ new Vector3(5, 0, 1),
+ new Vector3(1, 0, 2),
+ new Vector3(2, 0, 2),
+ new Vector3(3, 0, 2),
+ new Vector3(4, 0, 2),
+ new Vector3(5, 0, 2),
+ new Vector3(1, 0, 3),
+ new Vector3(2, 0, 3),
+ new Vector3(3, 0, 3),
+ new Vector3(4, 0, 3),
+ new Vector3(5, 0, 3),
+ new Vector3(1, 0, 4),
+ new Vector3(2, 0, 4),
+ new Vector3(3, 0, 4),
+ new Vector3(4, 0, 4),
+ new Vector3(5, 0, 4),
+ new Vector3(1, 0, 5),
+ new Vector3(2, 0, 5),
+ new Vector3(3, 0, 5),
+ new Vector3(4, 0, 5),
+ new Vector3(5, 0, 5),
+        };
+        private int ubObject;
 
         public Engine(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = new OpenTK.Mathematics.Vector2i(width, height), Title = title })
         {
@@ -89,6 +118,20 @@ namespace NoiseForge.Core
             texture0 = new Texture("container.jpg");
             _modelShader.UniformFloat("texture0", 0);
 
+            int Indexx = GL.GetUniformBlockIndex(_modelShader.programLocation, "Matrices");
+            GL.UniformBlockBinding(_modelShader.programLocation, Indexx, 0);
+
+            ubObject = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
+            GL.BufferData(BufferTarget.UniformBuffer, sizeof(float) * 2 * 16, IntPtr.Zero, BufferUsageHint.StaticDraw);
+            GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 0, ubObject);
+            Matrix4 perpectiveMatrix = camera.PerspectiveMatrix;
+            GL.BufferSubData(BufferTarget.UniformBuffer, 0, Vector4.SizeInBytes * 4, ref perpectiveMatrix);
+            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+
+
         }
         protected override void OnRenderFrame(FrameEventArgs args)
         {
@@ -100,9 +143,20 @@ namespace NoiseForge.Core
             _modelShader.Use();
             texture0.UseTexture();
             _modelShader.UniformMatrix4("view", camera.GetViewMatrix());
-            _modelShader.UniformMatrix4("projection", camera.PerspectiveMatrix);
-            _modelShader.UniformMatrix4("model", Matrix4.CreateScale(2f) * Matrix4.CreateTranslation(modelPosition));
-            GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
+            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
+            Matrix4 viewMatrix = camera.GetViewMatrix();
+            GL.BufferSubData(BufferTarget.UniformBuffer, Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4, ref viewMatrix);
+            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
+
+            for (int i = 0; i < cubePositions.Length; i++)
+            {
+                for (int j = 0; j < cubePositions.Length; j++)
+                {
+                    _modelShader.UniformMatrix4("model", Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(cubePositions[i]) * Matrix4.CreateTranslation(cubePositions[j]));
+                    GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
+
+                }
+            }
 
 
             SwapBuffers();
