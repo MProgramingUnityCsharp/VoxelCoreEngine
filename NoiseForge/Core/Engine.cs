@@ -14,6 +14,9 @@ namespace NoiseForge.Core
             -.5f,-0.5f,
             .5f,-0.5f,
             };
+        private int shaderProgram;
+        private int vertexShader;
+        private int fragmentShader;
 
         public Engine(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = new OpenTK.Mathematics.Vector2i(width, height), Title = title })
         {
@@ -31,6 +34,20 @@ namespace NoiseForge.Core
             GL.BindVertexArray(VAOTriangle);
             GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 0, 0);
             GL.EnableVertexAttribArray(0);
+
+
+            vertexShader = GL.CreateShader(ShaderType.VertexShader);
+            GL.ShaderSource(vertexShader, File.ReadAllText("Shaders\\Default.vert"));
+            GL.CompileShader(vertexShader);
+            fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
+            GL.ShaderSource(fragmentShader, File.ReadAllText("Shaders\\Default.frag"));
+            GL.CompileShader(fragmentShader);
+
+            shaderProgram = GL.CreateProgram();
+            GL.AttachShader(shaderProgram, vertexShader);
+            GL.AttachShader(shaderProgram, fragmentShader);
+            GL.LinkProgram(shaderProgram);
+
         }
         protected override void OnRenderFrame(FrameEventArgs args)
         {
@@ -38,6 +55,8 @@ namespace NoiseForge.Core
             GL.Clear(ClearBufferMask.ColorBufferBit);
 
 
+            GL.BindVertexArray(VAOTriangle);
+            GL.UseProgram(shaderProgram);
             GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
 
 
