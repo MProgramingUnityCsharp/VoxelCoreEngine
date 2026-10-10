@@ -1,4 +1,5 @@
-﻿using OpenTK.Graphics.OpenGL4;
+﻿using NoiseForge.Graphics;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
@@ -52,11 +53,10 @@ namespace NoiseForge.Core
     -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 };
-        private int shaderProgram;
-        private int vertexShader;
-        private int fragmentShader;
+
         private Vector3 position = new Vector3(0, 0, -5);
         private Vector3 target = Vector3.UnitZ;
+        private Shader _modelShader;
 
         public Engine(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = new OpenTK.Mathematics.Vector2i(width, height), Title = title })
         {
@@ -75,18 +75,8 @@ namespace NoiseForge.Core
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
             GL.EnableVertexAttribArray(0);
 
+            _modelShader = new Shader("Shaders\\Default.vert", "Shaders\\Default.frag");
 
-            vertexShader = GL.CreateShader(ShaderType.VertexShader);
-            GL.ShaderSource(vertexShader, File.ReadAllText("Shaders\\Default.vert"));
-            GL.CompileShader(vertexShader);
-            fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-            GL.ShaderSource(fragmentShader, File.ReadAllText("Shaders\\Default.frag"));
-            GL.CompileShader(fragmentShader);
-
-            shaderProgram = GL.CreateProgram();
-            GL.AttachShader(shaderProgram, vertexShader);
-            GL.AttachShader(shaderProgram, fragmentShader);
-            GL.LinkProgram(shaderProgram);
 
         }
         protected override void OnRenderFrame(FrameEventArgs args)
@@ -96,15 +86,13 @@ namespace NoiseForge.Core
 
 
             GL.BindVertexArray(VAOTriangle);
-            GL.UseProgram(shaderProgram);
-            int viewLocation = GL.GetUniformLocation(shaderProgram, "view");
-            int projectionLocation = GL.GetUniformLocation(shaderProgram, "projection");
+            _modelShader.Use();
+
 
             Matrix4 projectionMatrix = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60), 1, .1f, 100);
             Matrix4 viewMatrix = Matrix4.CreateTranslation(1, 0, 0) * Matrix4.LookAt(position, position + target, Vector3.UnitY);
-            GL.UniformMatrix4(viewLocation, false, ref viewMatrix);
-            GL.UniformMatrix4(projectionLocation, false, ref projectionMatrix);
-
+            _modelShader.UniformMatrix4("view", viewMatrix);
+            _modelShader.UniformMatrix4("projection", projectionMatrix);
             GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
 
 
