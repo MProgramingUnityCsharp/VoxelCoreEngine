@@ -15,7 +15,7 @@ namespace NoiseForge.Graphics
         private Vector3 up = Vector3.UnitY;
 
 
-        public Camera(float fieldOfView = 60, float aspect = 1, float near = 0.1f, float far = 100)
+        public Camera(float fieldOfView = 60, float aspect = 1.77f, float near = 0.1f, float far = 100)
         {
             Position = new Vector3(0, 0, 5);
             PerspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(fieldOfView), aspect, near, far);

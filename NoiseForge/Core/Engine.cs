@@ -1,4 +1,6 @@
-﻿using NoiseForge.Graphics;
+﻿using Emgu.CV;
+using Emgu.CV.Structure;
+using NoiseForge.Graphics;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -9,7 +11,7 @@ namespace NoiseForge.Core
     internal class Engine : GameWindow
     {
         private int VAOTriangle;
-        private CameraNew.Camera camera;
+        private Camera camera;
         private int VBOTriangle;
         float[] vertices = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -90,37 +92,55 @@ namespace NoiseForge.Core
  new Vector3(5, 0, 5),
         };
         private int ubObject;
-        private int depth = 30;
-        private int col = 100;
-        private int row = 100;
+        private int depth = 10;
+        private int col = 50;
+        private int row = 50;
         private Matrix4[] modelMatrices;
+        private List<Matrix4> translationMatrixModelList = new List<Matrix4>();
 
         public Engine(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = new OpenTK.Mathematics.Vector2i(width, height), Title = title })
         {
 
 
-
-
         }
         protected override void OnLoad()
         {
+
+            Image<Gray, byte> Image = CvInvoke.Imread("perlin_output.png").ToImage<Gray, byte>();
             int indexer = 0;
             GL.Enable(EnableCap.DepthTest);
-
-            modelMatrices = new Matrix4[row * col * depth];
             for (int i = 0; i < col; i++)
             {
                 for (int j = 0; j < row; j++)
                 {
-                    for (int k = 0; k < depth; k++)
+                    int column = Image.Height / this.col;
+                    int row = Image.Width / this.row;
+                    double depth = (int)Image[j * row, i * column].Intensity / 10;
+
+                    for (int k = 0; k < this.depth; k++)
                     {
-                        modelMatrices[indexer++] = Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(Vector3.UnitX * i) * Matrix4.CreateTranslation(Vector3.UnitZ * j) * Matrix4.CreateTranslation(Vector3.UnitY * k);
+
+                        translationMatrixModelList.Add(Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(Vector3.UnitX * i) * Matrix4.CreateTranslation(Vector3.UnitZ * j) * Matrix4.CreateTranslation(Vector3.UnitY * (float)(k + depth)));
+                        Matrix4[] matrix4 = translationMatrixModelList.Where(item => item == translationMatrixModelList[translationMatrixModelList.Count - 1]).ToArray();
+
+
+                        if (matrix4.Length > 1)
+                        {
+                            for (int l = 0; l < matrix4.Length; l++)
+                            {
+
+                                if (l == 0)
+                                {
+                                    continue;
+                                }
+                                translationMatrixModelList.Remove(matrix4[l]);
+                            }
+                        }
                     }
                 }
             }
-
-
-            camera = new CameraNew.Camera();
+            modelMatrices = translationMatrixModelList.ToArray();
+            camera = new Camera();
             VBOTriangle = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, VBOTriangle);
             GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * vertices.Length, vertices, BufferUsageHint.StaticDraw);
@@ -154,7 +174,7 @@ namespace NoiseForge.Core
 
             int bufferMatrices = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, bufferMatrices);
-            GL.BufferData(BufferTarget.ArrayBuffer, 4 * Vector4.SizeInBytes * col * row * depth, modelMatrices, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, 4 * Vector4.SizeInBytes * modelMatrices.Length, modelMatrices, BufferUsageHint.StaticDraw);
             GL.VertexAttribPointer(2, 4, VertexAttribPointerType.Float, false, 4 * Vector4.SizeInBytes, 0);
             GL.EnableVertexAttribArray(2);
             GL.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, 4 * Vector4.SizeInBytes, Vector4.SizeInBytes * 1);
@@ -195,7 +215,7 @@ namespace NoiseForge.Core
 
             int indexer = 0;
 
-            GL.DrawArraysInstanced(PrimitiveType.Triangles, 0, vertices.Length, row * col * depth);
+            GL.DrawArraysInstanced(PrimitiveType.Triangles, 0, vertices.Length, modelMatrices.Length);
             //  GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
 
 
