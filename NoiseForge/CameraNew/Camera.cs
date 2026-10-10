@@ -19,7 +19,7 @@ namespace NoiseForge.CameraNew
         private float pitch;
         private float yaw = -90;
 
-        private float Speed = 10;
+        private float Speed = 7.5f;
 
         public Camera(float fieldOfView = 60f, float aspect = 1f, float near = 0.1f, float far = 100)
         {
