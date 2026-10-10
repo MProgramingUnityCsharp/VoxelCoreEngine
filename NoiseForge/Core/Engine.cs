@@ -9,7 +9,7 @@ namespace NoiseForge.Core
     internal class Engine : GameWindow
     {
         private int VAOTriangle;
-        private Camera camera;
+        private CameraNew.Camera camera;
         private int VBOTriangle;
         float[] vertices = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -69,9 +69,8 @@ namespace NoiseForge.Core
         }
         protected override void OnLoad()
         {
-            camera = new Camera();
-            camera.GetPerspective();
-
+            camera = new CameraNew.Camera();
+            // camera.GetPerspective();
             VBOTriangle = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, VBOTriangle);
             GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * vertices.Length, vertices, BufferUsageHint.StaticDraw);
@@ -95,7 +94,7 @@ namespace NoiseForge.Core
 
 
             _modelShader.UniformMatrix4("view", camera.GetViewMatrix());
-            _modelShader.UniformMatrix4("projection", camera.projectionMatrix);
+            _modelShader.UniformMatrix4("projection", camera.PerspectiveMatrix);
             GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
 
 
@@ -118,7 +117,7 @@ namespace NoiseForge.Core
         }
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
-
+            camera.lastPos = new Vector2(MousePosition.X, MousePosition.Y);
         }
 
 
