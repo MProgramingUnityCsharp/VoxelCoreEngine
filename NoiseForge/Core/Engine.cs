@@ -57,91 +57,24 @@ namespace NoiseForge.Core
    -0.5f,  0.5f, -0.5f,    0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
     -0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f,    0.0f, 0.0f,
 };
-        // Back face
-        // Bottom-left
-        // top-right
-        // bottom-right         
-        // top-right
-        // bottom-left
-        // top-left
-        // Front face
-        // bottom-left
-        // bottom-right
-        // top-right
-        // top-right
-        // top-left
-        // bottom-left
-        // Left face
-        // top-right
-        // top-left
-        // bottom-left
-        // bottom-left
-        // bottom-right
-        // top-right
-        // Right face
-        // top-left
-        // bottom-right
-        // top-right         
-        // bottom-right
-        // top-left
-        // bottom-left     
-        // Bottom face
-        // top-right
-        // top-left
-        // bottom-left
-        // bottom-left
-        // bottom-right
-        // top-right
-        // Top face
-        // top-left
-        // bottom-right
-        // top-right     
-        // bottom-right
-        // top-left
-        // bottom-left        
-
 
 
         private Vector3 position = new Vector3(0, 0, -5);
         private Vector3 modelPosition = new Vector3(1, 0, 1);
         private Vector3 target = Vector3.UnitZ;
         private Shader _modelShader;
+        private Shader _lightShader;
         private Texture texture0;
         private bool canRotate;
-        private Vector3[] cubePositions =
-        {
- new Vector3(1, 0, 1),
- new Vector3(2, 0, 1),
- new Vector3(3, 0, 1),
- new Vector3(4, 0, 1),
- new Vector3(5, 0, 1),
- new Vector3(1, 0, 2),
- new Vector3(2, 0, 2),
- new Vector3(3, 0, 2),
- new Vector3(4, 0, 2),
- new Vector3(5, 0, 2),
- new Vector3(1, 0, 3),
- new Vector3(2, 0, 3),
- new Vector3(3, 0, 3),
- new Vector3(4, 0, 3),
- new Vector3(5, 0, 3),
- new Vector3(1, 0, 4),
- new Vector3(2, 0, 4),
- new Vector3(3, 0, 4),
- new Vector3(4, 0, 4),
- new Vector3(5, 0, 4),
- new Vector3(1, 0, 5),
- new Vector3(2, 0, 5),
- new Vector3(3, 0, 5),
- new Vector3(4, 0, 5),
- new Vector3(5, 0, 5),
-        };
+
         private int ubObject;
         private int depth = 10;
         private int col = 50;
         private int row = 50;
         private Matrix4[] modelMatrices;
         private List<Matrix4> translationMatrixModelList = new List<Matrix4>();
+        private Vector3 lightDir = new Vector3(1, 2f, .5f) * 20;
+        private Matrix4 lightTranslationMat4;
 
         public Engine(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = new OpenTK.Mathematics.Vector2i(width, height), Title = title })
         {
@@ -152,6 +85,14 @@ namespace NoiseForge.Core
         {
 
             Image<Gray, byte> Image = CvInvoke.Imread("perlin_output.png").ToImage<Gray, byte>();
+            lightTranslationMat4 = Matrix4.CreateTranslation(lightDir);
+
+            _modelShader = new Shader("Shaders\\Default.vert", "Shaders\\Default.frag");
+            _lightShader = new Shader("Shaders\\LightShader.vert", "Shaders\\LightShader.frag");
+            texture0 = new Texture("container.jpg");
+
+
+
             int indexer = 0;
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
@@ -163,7 +104,7 @@ namespace NoiseForge.Core
                 {
                     int column = Image.Height / this.col;
                     int row = Image.Width / this.row;
-                    double depth = (int)Image[j * row, i * column].Intensity / 40;
+                    double depth = (int)Image[j * row, i * column].Intensity / 20;
 
                     for (int k = 0; k < this.depth; k++)
                     {
@@ -206,12 +147,12 @@ namespace NoiseForge.Core
             GL.EnableVertexAttribArray(2);
 
 
-            _modelShader = new Shader("Shaders\\Default.vert", "Shaders\\Default.frag");
-            texture0 = new Texture("container.jpg");
             _modelShader.UniformFloat("texture0", 0);
 
-            int Indexx = GL.GetUniformBlockIndex(_modelShader.programLocation, "Matrices");
-            GL.UniformBlockBinding(_modelShader.programLocation, Indexx, 0);
+            int index_modelShader = GL.GetUniformBlockIndex(_modelShader.programLocation, "Matrices");
+            GL.UniformBlockBinding(_modelShader.programLocation, index_modelShader, 0);
+            int index_lightShader = GL.GetUniformBlockIndex(_lightShader.programLocation, "Matrices");
+            GL.UniformBlockBinding(_modelShader.programLocation, index_lightShader, 0);
 
             ubObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
@@ -225,11 +166,7 @@ namespace NoiseForge.Core
             GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
             GL.BufferSubData(BufferTarget.UniformBuffer, Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4, ref viewMatrix);
             GL.BindBuffer(BufferTarget.UniformBuffer, 0);
-            Vector3 lightDir = Vector3.UnitY * 20;
-
             GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
-            GL.BufferSubData(BufferTarget.UniformBuffer, 2 * Vector4.SizeInBytes * 4, Vector4.SizeInBytes, ref lightDir);
-            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
 
             int bufferMatrices = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, bufferMatrices);
@@ -260,7 +197,6 @@ namespace NoiseForge.Core
             _modelShader.Use();
             texture0.UseTexture();
 
-            _modelShader.UniformVector("lightDir", new Vector3(0, 20, 0));
             _modelShader.UniformVector("objectColor", new Vector3(.25f, .25f, .25f));
             _modelShader.UniformVector("lightColor", new Vector3(1f, 1f, 1));
 
@@ -272,6 +208,14 @@ namespace NoiseForge.Core
             int indexer = 0;
 
             GL.DrawArraysInstanced(PrimitiveType.Triangles, 0, vertices.Length, modelMatrices.Length);
+
+            lightTranslationMat4 = Matrix4.CreateTranslation(lightDir);
+
+            _lightShader.Use();
+            _lightShader.UniformMatrix4("model", lightTranslationMat4);
+            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
+            GL.BufferSubData(BufferTarget.UniformBuffer, 2 * Vector4.SizeInBytes * 4, Vector4.SizeInBytes, ref lightDir);
+            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
             GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
 
 
@@ -293,6 +237,24 @@ namespace NoiseForge.Core
             var mouseInput = MouseState;
 
             camera.Update(keyboardInput, mouseInput, args);
+
+            if (keyboardInput.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up))
+            {
+                lightDir += Vector3.UnitZ * .01f;
+            }
+            if (keyboardInput.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down))
+            {
+                lightDir -= Vector3.UnitZ * .01f;
+            }
+            if (keyboardInput.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left))
+            {
+                lightDir += Vector3.UnitX * .01f;
+            }
+            if (keyboardInput.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right))
+            {
+                lightDir -= Vector3.UnitX * .01f;
+            }
+
 
         }
         protected override void OnMouseDown(MouseButtonEventArgs e)
