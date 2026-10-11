@@ -54,5 +54,11 @@ namespace NoiseForge.Graphics
         {
             GL.UseProgram(programLocation);
         }
+
+        internal void UniformVector(string name, Vector3 vector3)
+        {
+            int index = ExtractLocation(name);
+            GL.Uniform3(index, ref vector3);
+        }
     }
 }
