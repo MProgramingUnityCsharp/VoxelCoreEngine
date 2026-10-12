@@ -15,7 +15,7 @@ namespace NoiseForge
             {
                 ImageLoader imageInstance = new ImageLoader("Textures\\perlin_output.png", 1024, 1024, 0.01, seedInteger);
             }
-            using (Engine window = new Engine(1000, 600, "Game Engine Renderer"))
+            using (Engine window = new Engine(1000, 600, "VoxelCore Engine"))
             {
                 window.Run();
             }
