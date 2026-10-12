@@ -51,3 +51,7 @@ You can tweak the procedural generation and world-building behavior using the fo
 * **`TERRAIN_ROUGHNESS`**: Controls the overall variance, steepness, and ruggedness of the terrain mountains. Higher values create sharp, dramatic peaks while lower values produce flat plains.
 * **`row` & `col`**: Represent the 2D grid coordinates/indices of the chunk generation loops, mapping local block placements across the world space.
 * **`depth`**: Determines the height intensity/elevation values derived from noise functions or texture data, acting as the foundation for surface height calculations and safe tree height bounds.
+
+![Terrain Engine Preview](assets/renderImage-version-1.png)
+![Terrain Engine Preview](assets/renderImage-version-2.png)
+![Terrain Engine Preview](assets/renderImage-version-3.png)
