@@ -54,3 +54,4 @@ You can tweak the procedural generation and world-building behavior using the fo
 ![Terrain Engine Preview](assets/renderImage-version-1.png)
 ![Terrain Engine Preview](assets/renderImage-version-2.png)
 ![Terrain Engine Preview](assets/renderImage-version-3.png)
+![Terrain Engine Preview](assets/renderImage-version-4.png)
