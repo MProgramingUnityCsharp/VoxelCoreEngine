@@ -71,8 +71,8 @@ namespace NoiseForge.Core
         private Texture _texture2;
 
         private int _depth = 10;
-        private int _col = 30;
-        private int _row = 30;
+        private int _col = 100;
+        private int _row = 100;
 
         private List<Matrix4> _blockTranslationList = new List<Matrix4>();
         private List<Matrix4> _blockLeavesList = new List<Matrix4>();
@@ -85,7 +85,10 @@ namespace NoiseForge.Core
 
         private UniformBuffer _uniformBuffer;
         private Model<float> _blockTreeBodiesModel;
-        private readonly float TERRAIN_ROUGHNESS = 7;
+        private Vector3 lastTreePosition;
+        private int _finalDepth;
+        private bool initializedFirstTime = true;
+        private readonly float TERRAIN_ROUGHNESS = 10;
 
         public Engine(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = new OpenTK.Mathematics.Vector2i(width, height), Title = title })
         {
@@ -123,58 +126,74 @@ namespace NoiseForge.Core
                     int column = Image.Height / this._col;
                     int row = Image.Width / this._row;
                     double depth = (int)(Image[j * row, i * column].Intensity / 255 * TERRAIN_ROUGHNESS);
-                    Matrix4 createdTree = Matrix4.CreateScale(1);
-                    for (int k = 0; k < this._depth; k++)
+
+
+                    int surfaceHeight = (int)((Image[j * row, i * column].Intensity / 255.0) * TERRAIN_ROUGHNESS);
+
+                    for (int k = 0; k <= surfaceHeight; k++)
                     {
+                        Matrix4 terrainMatrix = Matrix4.CreateScale(1f) *
+                                                Matrix4.CreateTranslation(new Vector3(i, k, j));
+                        _blockTranslationList.Add(terrainMatrix);
+                    }
 
-                        if (depth + k > this._depth)
+                    bool canSpawnTree = (i % 6 == 0 && j % 6 == 0);
+                    int treeCreatingProbability = randomTreeGenerator.Next(0, 10);
+
+                    if (canSpawnTree && treeCreatingProbability <= 4)
+                    {
+                        int minHeight = 3;
+                        int maxHeight = Math.Clamp(4 + (int)(TERRAIN_ROUGHNESS * 0.1f), 4, 9);
+
+                        if (maxHeight <= minHeight) maxHeight = minHeight + 1;
+
+                        int randomHeight = randomTreeHeightGenerator.Next(minHeight, maxHeight);
+
+
+                        for (int x = 0; x < randomHeight; x++)
                         {
-                            int randomHeight = randomTreeHeightGenerator.Next(3, (int)Math.Clamp((TERRAIN_ROUGHNESS * _depth + TERRAIN_ROUGHNESS) / _depth, 5, 12));
-                            int TreeCreatingPermisson = randomTreeGenerator.Next(0, 255);
-                            if (TreeCreatingPermisson <= 5)
-                            {
-                                for (int x = 0; x < randomHeight; x++)
-                                {
-                                    createdTree = Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(Vector3.UnitX * i) * Matrix4.CreateTranslation(Vector3.UnitZ * j) * Matrix4.CreateTranslation(Vector3.UnitY * (float)((k + depth) + x));
-                                    _blockTreeBodiesList.Add(createdTree);
-                                }
-                                for (int y = 0; y < 3; y++)
-                                {
-                                    for (int z = 0; z < 3; z++)
-                                    {
+                            int trunkY = surfaceHeight + 1 + x;
 
-                                        _blockLeavesList.Add(Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(-Vector3.UnitX) * Matrix4.CreateTranslation(-Vector3.UnitZ) * Matrix4.CreateTranslation(Vector3.UnitX * (i + z)) * Matrix4.CreateTranslation(Vector3.UnitZ * (j + y)) * Matrix4.CreateTranslation(Vector3.UnitY * (float)(randomHeight + (k + depth))));
-                                    }
-                                }
-
-                                continue;
-                            }
+                            Matrix4 trunkMatrix = Matrix4.CreateScale(1f) *
+                                                  Matrix4.CreateTranslation(new Vector3(i, trunkY, j));
+                            _blockTreeBodiesList.Add(trunkMatrix);
                         }
 
+                        int leavesStartY = surfaceHeight + 1 + randomHeight;
 
-                        _blockTranslationList.Add(Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(Vector3.UnitX * i) * Matrix4.CreateTranslation(Vector3.UnitZ * j) * Matrix4.CreateTranslation(Vector3.UnitY * (float)(k + depth)));
-                        #region for optimization
-
-                        //Matrix4[] matrix4 = translationMatrixModelList.Where(item => item == translationMatrixModelList[translationMatrixModelList.Count - 1]).ToArray();
-
-
-                        //if (matrix4.Length > 1)
-                        //{
-                        //    for (int l = 0; l < matrix4.Length; l++)
-                        //    {
-
-                        //        if (l == 0)
-                        //        {
-                        //            continue;
-                        //        }
-                        //        translationMatrixModelList.Remove(matrix4[l]);
-                        //    }
-                        //}
-                        #endregion
-
+                        for (int ly = 0; ly < randomTreeLeavesGenerator.Next(1, 4); ly++)
+                        {
+                            for (int lx = -1; lx <= 1; lx++)
+                            {
+                                for (int lz = -1; lz <= 1; lz++)
+                                {
+                                    Matrix4 leafMatrix = Matrix4.CreateScale(1f) *
+                                                         Matrix4.CreateTranslation(new Vector3(i + lx, leavesStartY + ly, j + lz));
+                                    _blockLeavesList.Add(leafMatrix);
+                                }
+                            }
+                        }
                     }
                 }
             }
+            #region for optimization
+
+            //Matrix4[] matrix4 = translationMatrixModelList.Where(item => item == translationMatrixModelList[translationMatrixModelList.Count - 1]).ToArray();
+
+
+            //if (matrix4.Length > 1)
+            //{
+            //    for (int l = 0; l < matrix4.Length; l++)
+            //    {
+
+            //        if (l == 0)
+            //        {
+            //            continue;
+            //        }
+            //        translationMatrixModelList.Remove(matrix4[l]);
+            //    }
+            //}
+            #endregion
             _blockTranslations = _blockTranslationList.ToArray();
             _camera = new Camera();
             _blockTerrainModel = new Model<float>(_vertices, 0, 3, "Vertices", 8 * sizeof(float));
