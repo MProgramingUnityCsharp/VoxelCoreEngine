@@ -1,4 +1,5 @@
-﻿using Emgu.CV;
+﻿
+using Emgu.CV;
 using Emgu.CV.Structure;
 using NoiseForge.Graphics;
 using OpenTK.Graphics.OpenGL4;
@@ -6,6 +7,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using System.Diagnostics;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace NoiseForge.Core
 {
@@ -58,20 +60,23 @@ namespace NoiseForge.Core
 
 
         private Camera _camera;
-        private Model<float> _blockTerrain;
-        private Model<float> _blockTree;
+        private Model<float> _blockTerrainModel;
+        private Model<float> _blockLeavesModel;
         private Shader _modelShader;
         private Shader _lightShader;
         private Shader _grassShader;
-
+        private Shader _treeBodyShader;
         private Texture _texture0;
         private Texture _texture1;
+        private Texture _texture2;
+
         private int _depth = 10;
         private int _col = 30;
         private int _row = 30;
 
         private List<Matrix4> _blockTranslationList = new List<Matrix4>();
         private List<Matrix4> _blockLeavesList = new List<Matrix4>();
+        private List<Matrix4> _blockTreeBodiesList = new List<Matrix4>();
 
         private Matrix4[] _blockTranslations;
         private Matrix4 _lightTranslation;
@@ -79,8 +84,8 @@ namespace NoiseForge.Core
         private Vector3 _lightDir;
 
         private UniformBuffer _uniformBuffer;
-
-        private readonly float TERRAIN_ROUGHNESS = 5;
+        private Model<float> _blockTreeBodiesModel;
+        private readonly float TERRAIN_ROUGHNESS = 7;
 
         public Engine(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = new OpenTK.Mathematics.Vector2i(width, height), Title = title })
         {
@@ -92,10 +97,11 @@ namespace NoiseForge.Core
             _modelShader = new Shader("Shaders\\Default.vert", "Shaders\\Default.frag");
             _lightShader = new Shader("Shaders\\LightShader.vert", "Shaders\\LightShader.frag");
             _grassShader = new Shader("Shaders\\Default.vert", "Shaders\\Default.frag");
-            _modelShader.UniformFloat("texture0", 0);
+            _treeBodyShader = new Shader("Shaders\\Default.vert", "Shaders\\Default.frag");
 
             _texture0 = new Texture("container.jpg");
             _texture1 = new Texture("azalea_leaves.png");
+            _texture2 = new Texture("TreeBody.png");
 
         }
         protected override void OnLoad()
@@ -120,26 +126,24 @@ namespace NoiseForge.Core
                     Matrix4 createdTree = Matrix4.CreateScale(1);
                     for (int k = 0; k < this._depth; k++)
                     {
-                        #region for TreeGeneration
 
                         if (depth + k > this._depth)
                         {
-                            int randomHeight = randomTreeHeightGenerator.Next(3, 6);
+                            int randomHeight = randomTreeHeightGenerator.Next(3, (int)Math.Clamp((TERRAIN_ROUGHNESS * _depth + TERRAIN_ROUGHNESS) / _depth, 5, 12));
                             int TreeCreatingPermisson = randomTreeGenerator.Next(0, 255);
-                            if (TreeCreatingPermisson <= 2)
+                            if (TreeCreatingPermisson <= 5)
                             {
-
                                 for (int x = 0; x < randomHeight; x++)
                                 {
-                                    createdTree = Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(Vector3.UnitX * i) * Matrix4.CreateTranslation(Vector3.UnitZ * j) * Matrix4.CreateTranslation(Vector3.UnitY * (float)(k + x + depth));
-                                    _blockLeavesList.Add(createdTree);
+                                    createdTree = Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(Vector3.UnitX * i) * Matrix4.CreateTranslation(Vector3.UnitZ * j) * Matrix4.CreateTranslation(Vector3.UnitY * (float)((k + depth) + x));
+                                    _blockTreeBodiesList.Add(createdTree);
                                 }
                                 for (int y = 0; y < 3; y++)
                                 {
                                     for (int z = 0; z < 3; z++)
                                     {
 
-                                        _blockLeavesList.Add(Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(-Vector3.UnitX) * Matrix4.CreateTranslation(-Vector3.UnitZ) * Matrix4.CreateTranslation(Vector3.UnitX * (i + z)) * Matrix4.CreateTranslation(Vector3.UnitZ * (j + y)) * Matrix4.CreateTranslation(Vector3.UnitY * (float)(k + randomHeight + depth)));
+                                        _blockLeavesList.Add(Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(-Vector3.UnitX) * Matrix4.CreateTranslation(-Vector3.UnitZ) * Matrix4.CreateTranslation(Vector3.UnitX * (i + z)) * Matrix4.CreateTranslation(Vector3.UnitZ * (j + y)) * Matrix4.CreateTranslation(Vector3.UnitY * (float)(randomHeight + (k + depth))));
                                     }
                                 }
 
@@ -147,7 +151,6 @@ namespace NoiseForge.Core
                             }
                         }
 
-                        #endregion
 
                         _blockTranslationList.Add(Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(Vector3.UnitX * i) * Matrix4.CreateTranslation(Vector3.UnitZ * j) * Matrix4.CreateTranslation(Vector3.UnitY * (float)(k + depth)));
                         #region for optimization
@@ -174,19 +177,24 @@ namespace NoiseForge.Core
             }
             _blockTranslations = _blockTranslationList.ToArray();
             _camera = new Camera();
-            _blockTerrain = new Model<float>(_vertices, 0, 3, "Vertices", 8 * sizeof(float));
-            _blockTerrain.SetAttrib(1, 3, sizeof(float) * 8, sizeof(float) * 3);
-            _blockTerrain.SetAttrib(2, 3, sizeof(float) * 8, sizeof(float) * 6);
-            _blockTree = new Model<float>(_vertices, 0, 3, "Vertices", 8 * sizeof(float));
-            _blockTree.SetAttrib(1, 3, sizeof(float) * 8, sizeof(float) * 3);
-            _blockTree.SetAttrib(2, 3, sizeof(float) * 8, sizeof(float) * 6);
+            _blockTerrainModel = new Model<float>(_vertices, 0, 3, "Vertices", 8 * sizeof(float));
+            _blockTerrainModel.SetAttrib(1, 3, sizeof(float) * 8, sizeof(float) * 3);
+            _blockTerrainModel.SetAttrib(2, 3, sizeof(float) * 8, sizeof(float) * 6);
+            _blockLeavesModel = new Model<float>(_vertices, 0, 3, "Vertices", 8 * sizeof(float));
+            _blockLeavesModel.SetAttrib(1, 3, sizeof(float) * 8, sizeof(float) * 3);
+            _blockLeavesModel.SetAttrib(2, 3, sizeof(float) * 8, sizeof(float) * 6);
+
+            _blockTreeBodiesModel = new Model<float>(_vertices, 0, 3, "Vertices", 8 * sizeof(float));
+            _blockTreeBodiesModel.SetAttrib(1, 3, sizeof(float) * 8, sizeof(float) * 3);
+            _blockTreeBodiesModel.SetAttrib(2, 3, sizeof(float) * 8, sizeof(float) * 6);
 
 
 
 
             _modelShader.SetBindingPoint("Matrices", 0);
             _lightShader.SetBindingPoint("Matrices", 0);
-
+            _grassShader.SetBindingPoint("Matrices", 0);
+            _treeBodyShader.SetBindingPoint("Matrices", 0);
             _uniformBuffer = new UniformBuffer((4 * Vector4.SizeInBytes * 2) + Vector4.SizeInBytes * 2, 0);
 
             Matrix4 projection = _camera.PerspectiveMatrix;
@@ -195,11 +203,12 @@ namespace NoiseForge.Core
             _uniformBuffer.SetMatrixBuffer(projection, 0);
             _uniformBuffer.SetMatrixBuffer(viewMatrix, Vector4.SizeInBytes * 4);
 
-            _blockTerrain.BindVAO();
-            _blockTerrain.SetMatrixBuffer(_blockTranslations, 4, 3, 4, 1, "ModelMatrices", 4 * Vector4.SizeInBytes, Vector4.SizeInBytes);
-            _blockTree.BindVAO();
-            _blockTree.SetMatrixBuffer(_blockLeavesList.ToArray(), 4, 3, 4, 1, "ModelMatrices", 4 * Vector4.SizeInBytes, Vector4.SizeInBytes);
-
+            _blockTerrainModel.BindVAO();
+            _blockTerrainModel.SetMatrixBuffer(_blockTranslations, 4, 3, 4, 1, "ModelMatrices", 4 * Vector4.SizeInBytes, Vector4.SizeInBytes);
+            _blockLeavesModel.BindVAO();
+            _blockLeavesModel.SetMatrixBuffer(_blockLeavesList.ToArray(), 4, 3, 4, 1, "ModelMatrices", 4 * Vector4.SizeInBytes, Vector4.SizeInBytes);
+            _blockTreeBodiesModel.BindVAO();
+            _blockTreeBodiesModel.SetMatrixBuffer(_blockTreeBodiesList.ToArray(), 4, 3, 4, 1, "ModelMatrices", 4 * Vector4.SizeInBytes, Vector4.SizeInBytes);
 
         }
         protected override void OnRenderFrame(FrameEventArgs args)
@@ -211,7 +220,7 @@ namespace NoiseForge.Core
             Matrix4 viewMatrix = _camera.GetViewMatrix();
 
 
-            _blockTerrain.BindVAO();
+            _blockTerrainModel.BindVAO();
             _modelShader.Use();
             _texture0.UseTexture2D();
 
@@ -225,14 +234,19 @@ namespace NoiseForge.Core
 
 
             GL.DrawArraysInstanced(PrimitiveType.Triangles, 0, _vertices.Length, _blockTranslations.Length);
-            _blockTree.BindVAO();
+            _blockLeavesModel.BindVAO();
             _grassShader.Use();
             _texture1.UseTexture2D();
             _grassShader.UniformVector("objectColor", new Vector3(1f));
             _grassShader.UniformVector("lightColor", new Vector3(1.2f));
 
-            GL.DrawArraysInstanced(PrimitiveType.Triangles, 0, _vertices.Length, _blockTranslations.Length);
-
+            GL.DrawArraysInstanced(PrimitiveType.Triangles, 0, _vertices.Length, _blockLeavesList.Count);
+            _blockTreeBodiesModel.BindVAO();
+            _treeBodyShader.Use();
+            _treeBodyShader.UniformVector("objectColor", new Vector3(1f));
+            _treeBodyShader.UniformVector("lightColor", new Vector3(1.2f));
+            _texture2.UseTexture2D();
+            GL.DrawArraysInstanced(PrimitiveType.Triangles, 0, _vertices.Length, _blockTreeBodiesList.Count);
             _lightTranslation = Matrix4.CreateTranslation(_lightDir);
 
             _lightShader.Use();

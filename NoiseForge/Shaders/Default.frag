@@ -31,5 +31,10 @@ vec3 reflectDir = reflect(-light, norm);
 vec3 specular = specularStrength * spec * lightColor; 
 
 vec3 result = (ambient+diffuse+specular)*objectColor;
-	FragColor = vec4(result,1.0) * texture(texture0,texCoords);
+vec4 FragTex = texture(texture0,texCoords);
+if(FragTex.w < 0.4f)
+	{
+	discard;
+	}
+	FragColor = vec4(result,1.0) * FragTex;
 }
