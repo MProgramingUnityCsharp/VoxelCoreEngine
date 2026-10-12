@@ -32,16 +32,22 @@
     <None Update="Shader2D\Default.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\Default.frag">
+    <None Update="Shaders\DefaultProgram.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\Default.vert">
+    <None Update="Shaders\DefaultProgram.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\LightShader.frag">
+    <None Update="Shaders\LightProgram.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\LightShader.vert">
+    <None Update="Shaders\LightProgram.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\TerrainProgram.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\TerrainProgram.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

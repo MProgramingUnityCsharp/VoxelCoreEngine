@@ -10,11 +10,16 @@ mat4 view;
 vec3 lightPos;
 vec3 viewPos;
 };
+layout (std140) uniform Lights
+{
+vec3 lightColorRay;
+};
 out vec3 lightDir;
 out vec3 Normal;
 out vec2 texCoords;
 out vec3 objectPosition;
 out vec3 viewLocation;
+out vec3 lightColor;
 void main()
 {
 	gl_Position = projection * view * model * vec4(aPos,1);
@@ -22,6 +27,6 @@ void main()
 	lightDir = lightPos;
 	Normal =  aNormals;
 	objectPosition = vec3(model * vec4(aPos, 1.0));
-	
+	lightColor = lightColorRay;
 
 }

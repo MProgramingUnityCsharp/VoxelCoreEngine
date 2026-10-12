@@ -1,6 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using System.Diagnostics;
 
 namespace NoiseForge.Graphics
 {
@@ -10,21 +11,22 @@ namespace NoiseForge.Graphics
         private float SPEED = 8f;
         private float SENSITIVITY = 250;
 
-        public Vector3 front = -Vector3.UnitZ;
+        public Vector3 front = new Vector3(0.75f, -.5f, .43f);
         private Vector3 right = Vector3.UnitX;
         private Vector3 up = Vector3.UnitY;
 
 
         public Camera(float fieldOfView = 60, float aspect = 1.77f, float near = 0.1f, float far = 100)
         {
-            Position = new Vector3(0, 0, 5);
+            Position = new Vector3(0, 20, 5);
             PerspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(fieldOfView), aspect, near, far);
             GetViewMatrix();
         }
 
         public Vector3 Position { get; private set; }
-        private float pitch;
-        private float yaw = -90;
+        private float Pitch { get => Math.Clamp(_pitch, -89, 89); set => _pitch = value; }
+        private float _pitch = -30;
+        private float yaw = 30;
         private bool firstMove = true;
         public Vector2 lastPos;
         public Matrix4 ViewMatrix { get; private set; }
@@ -32,6 +34,7 @@ namespace NoiseForge.Graphics
         public Matrix4 GetViewMatrix()
         {
             ViewMatrix = Matrix4.LookAt(Position, Position + front, up);
+            Debug.WriteLine("front : " + front);
             return ViewMatrix;
         }
         public void InputController(KeyboardState input, MouseState mouse, FrameEventArgs e)
@@ -64,8 +67,10 @@ namespace NoiseForge.Graphics
             }
             if (mouse.IsButtonDown(MouseButton.Left))
             {
+
                 if (firstMove)
                 {
+                    UpdateVectors();
                     lastPos = new Vector2(mouse.X, mouse.Y);
                     firstMove = false;
                 }
@@ -80,30 +85,31 @@ namespace NoiseForge.Graphics
 
 
                     yaw += xDelta * SENSITIVITY * (float)e.Time;
-                    pitch -= yDelta * SENSITIVITY * (float)e.Time;
-                    //    firstMove = false;
+                    Pitch -= yDelta * SENSITIVITY * (float)e.Time;
 
                 }
 
+                UpdateVectors();
 
             }
 
-            UpdateVectors();
+
 
         }
 
         private void UpdateVectors()
         {
-            front.X += (float)(Math.Cos(MathHelper.DegreesToRadians(pitch)) * Math.Cos(MathHelper.DegreesToRadians(yaw)));
-            front.Y += (float)(Math.Sin(MathHelper.DegreesToRadians(pitch)));
-            front.Z += (float)(Math.Cos(MathHelper.DegreesToRadians(pitch)) * Math.Sin(MathHelper.DegreesToRadians(yaw)));
+            front.X += (float)(Math.Cos(MathHelper.DegreesToRadians(Pitch)) * Math.Cos(MathHelper.DegreesToRadians(yaw)));
+            front.Y += (float)(Math.Sin(MathHelper.DegreesToRadians(Pitch)));
+            front.Z += (float)(Math.Cos(MathHelper.DegreesToRadians(Pitch)) * Math.Sin(MathHelper.DegreesToRadians(yaw)));
+
             front.Normalize();
 
             right = Vector3.Cross(front, Vector3.UnitY);
             right.Normalize();
             up = Vector3.Cross(right, front);
             up.Normalize();
-            GetViewMatrix();
+
         }
 
         public void Update(KeyboardState input, MouseState mouse, FrameEventArgs e)
