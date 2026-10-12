@@ -73,7 +73,7 @@ namespace NoiseForge.Core
         private int row = 50;
         private Matrix4[] modelMatrices;
         private List<Matrix4> translationMatrixModelList = new List<Matrix4>();
-        private Vector3 lightDir = new Vector3(1, 2f, .5f) * 20;
+        private Vector3 lightDir = new Vector3(1, 0f, .5f);
         private Matrix4 lightTranslationMat4;
 
         public Engine(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = new OpenTK.Mathematics.Vector2i(width, height), Title = title })
@@ -156,7 +156,7 @@ namespace NoiseForge.Core
 
             ubObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
-            GL.BufferData(BufferTarget.UniformBuffer, (4 * Vector4.SizeInBytes * 2) + Vector4.SizeInBytes, IntPtr.Zero, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.UniformBuffer, (4 * Vector4.SizeInBytes * 2) + Vector4.SizeInBytes * 2, IntPtr.Zero, BufferUsageHint.StaticDraw);
             GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 0, ubObject);
             Matrix4 projection = camera.PerspectiveMatrix;
             GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
@@ -215,6 +215,9 @@ namespace NoiseForge.Core
             _lightShader.UniformMatrix4("model", lightTranslationMat4);
             GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
             GL.BufferSubData(BufferTarget.UniformBuffer, 2 * Vector4.SizeInBytes * 4, Vector4.SizeInBytes, ref lightDir);
+            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
+            Vector3 cameraPosition = camera.Position;
+            GL.BufferSubData(BufferTarget.UniformBuffer, 2 * Vector4.SizeInBytes * 4 + Vector4.SizeInBytes, Vector4.SizeInBytes, ref cameraPosition);
             GL.BindBuffer(BufferTarget.UniformBuffer, 0);
             GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
 

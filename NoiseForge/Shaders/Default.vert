@@ -8,12 +8,13 @@ layout (std140) uniform  Matrices
 mat4 projection;
 mat4 view;
 vec3 lightPos;
+vec3 viewPos;
 };
 out vec3 lightDir;
 out vec3 Normal;
 out vec2 texCoords;
 out vec3 objectPosition;
-
+out vec3 viewLocation;
 void main()
 {
 	gl_Position = projection * view * model * vec4(aPos,1);
@@ -21,5 +22,6 @@ void main()
 	lightDir = lightPos;
 	Normal =  aNormals;
 	objectPosition = vec3(model * vec4(aPos, 1.0));
+	
 
 }

@@ -4,14 +4,32 @@ out vec4 FragColor;
 uniform sampler2D texture0;
 
 uniform vec3 objectColor;
-
+in vec3 viewLocation;
 in vec3 lightDir;
 in vec2 texCoords;
 in vec3 Normal;
 in vec3 objectPosition;
 void main()
 {
+	vec3 norm = normalize(Normal);
+
+	    float ambientStrength = 0.1;
+    vec3 ambient = ambientStrength * lightColor;
+
+	
 	vec3 light = normalize(lightDir-objectPosition);
-	float diff = max(dot(light,Normal),0.0);
-	FragColor = (diff +vec4(objectColor,1.0)*vec4(lightColor,1.0)) *texture(texture0,texCoords);
+	
+	float diff = max(dot(norm,light),0.0);
+		
+vec3 diffuse = diff * lightColor;
+
+vec3 viewDir = normalize(viewLocation - objectPosition);
+
+vec3 reflectDir = reflect(-light, norm); 
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+	float specularStrength = 0.5f;
+vec3 specular = specularStrength * spec * lightColor; 
+
+vec3 result = (ambient+diffuse+specular)*objectColor;
+	FragColor = vec4(result,1.0) * texture(texture0,texCoords);
 }
