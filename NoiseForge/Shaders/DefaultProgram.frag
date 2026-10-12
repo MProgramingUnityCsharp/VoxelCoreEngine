@@ -16,7 +16,7 @@ void main()
     vec3 ambient = ambientStrength * lightColor;
 
 	
-	vec3 light = normalize(lightDir);
+	vec3 light = normalize(lightDir-objectPosition);
 	
 	float diff = max(dot(norm,light),0.0);
 		

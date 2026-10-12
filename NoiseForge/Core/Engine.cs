@@ -227,7 +227,7 @@ namespace NoiseForge.Core
             _projectionBuffer = new UniformBuffer((4 * Vector4.SizeInBytes * 2) + Vector4.SizeInBytes * 2, 0);
             _lightBuffer = new UniformBuffer(Vector4.SizeInBytes, 1);
             _lightBuffer.BindUniformBuffer();
-            _lightBuffer.SetVector3Buffer(new Vector3(2f), 0);
+            _lightBuffer.SetVector3Buffer(new Vector3(1.7f), 0);
 
             Matrix4 projection = _camera.PerspectiveMatrix;
             Matrix4 viewMatrix = _camera.GetViewMatrix();
