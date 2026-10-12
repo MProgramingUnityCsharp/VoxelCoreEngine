@@ -21,18 +21,30 @@ A high-performance, custom-built voxel-based terrain engine developed from scrat
 
 * **Language:** C# (.NET)
 * **Graphics API:** OpenTK (OpenGL 4.x / Modern GLSL)
-* **Shaders:** Custom Vertex/Fragment shaders with UBO binding integration.
-* **Math:** OpenTK Mathematics library (`Matrix4`, `Vector3`, `Vector4`).
-
 ---
 
 ## ⚙️ Getting Started
 
 ### Prerequisites
-* .NET SDK (6.0 or higher recommended)
-* A graphics card supporting **OpenGL 4.3 or higher**
+* .NET SDK (10.0 or higher recommended)
+* A graphics card supporting **OpenGL 4 or higher**
 
 ### Building and Running
 1. Clone the repository:
    ```bash
    git clone [https://github.com/your-username/terravox-gl.git](https://github.com/your-username/terravox-gl.git)
+
+ ## 🧠 Core Methods & Techniques
+
+* **Procedural Noise Pipeline:** Generates organic, continuous terrain heights and structures using custom Perlin noise algorithms.
+* **Two-Pass Vegetation System:** Decouples terrain creation (Pass 1: stone/dirt/grass foundation) from decoration (Pass 2: secure tree trunk and leaf placement), preventing chunk boundary corruptions.
+* **`std140` Uniform Buffer Objects (UBOs):** Manages GPU-CPU synchronization efficiently by batching Projection and View matrices into aligned memory blocks.
+* **Dynamic Chunk Architecture:** Structures voxel data into optimized $16 \times 256 \times 16$ byte-based grids with real-time camera matrix updates in the render loop.
+
+## 🎛️ Key Control Variables
+
+You can tweak the procedural generation and world-building behavior using the following core parameters in the engine:
+
+* **`TERRAIN_ROUGHNESS`**: Controls the overall variance, steepness, and ruggedness of the terrain mountains. Higher values create sharp, dramatic peaks while lower values produce flat plains.
+* **`row` & `col`**: Represent the 2D grid coordinates/indices of the chunk generation loops, mapping local block placements across the world space.
+* **`depth`**: Determines the height intensity/elevation values derived from noise functions or texture data, acting as the foundation for surface height calculations and safe tree height bounds.
