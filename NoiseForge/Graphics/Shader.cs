@@ -23,10 +23,10 @@ namespace NoiseForge.Graphics
 
 
 
-            //GL.DetachShader(programLocation, vertexShaderLocation);
-            //GL.DetachShader(programLocation, fragmentShaderLocation);
-            //GL.DeleteShader(fragmentShaderLocation);
-            //GL.DeleteShader(vertexShaderLocation);
+            GL.DetachShader(programLocation, vertexShaderLocation);
+            GL.DetachShader(programLocation, fragmentShaderLocation);
+            GL.DeleteShader(fragmentShaderLocation);
+            GL.DeleteShader(vertexShaderLocation);
 
         }
         public void UniformMatrix4(string name, Matrix4 matrix)
@@ -59,6 +59,12 @@ namespace NoiseForge.Graphics
         {
             int index = ExtractLocation(name);
             GL.Uniform3(index, ref vector3);
+        }
+        public void SetBindingPoint(string uniformMemoryName, int bindingPoint)
+        {
+            int index_modelShader = GL.GetUniformBlockIndex(programLocation, uniformMemoryName);
+            GL.UniformBlockBinding(programLocation, index_modelShader, bindingPoint);
+
         }
     }
 }

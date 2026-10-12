@@ -5,14 +5,17 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using System.Diagnostics;
 
 namespace NoiseForge.Core
 {
     internal class Engine : GameWindow
     {
-        private int VAOTriangle;
+
         private Camera camera;
-        private int VBOTriangle;
+        private Model<float> blockModel;
+
+
         float[] vertices = {
     // positions          // normals           // texture coords
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,    0.0f, 0.0f,
@@ -59,22 +62,23 @@ namespace NoiseForge.Core
 };
 
 
-        private Vector3 position = new Vector3(0, 0, -5);
-        private Vector3 modelPosition = new Vector3(1, 0, 1);
-        private Vector3 target = Vector3.UnitZ;
         private Shader _modelShader;
         private Shader _lightShader;
+        private Shader _grassShader;
         private Texture texture0;
+        private Texture texture1;
         private bool canRotate;
 
-        private int ubObject;
         private int depth = 10;
-        private int col = 50;
-        private int row = 50;
+        private int col = 30;
+        private int row = 30;
         private Matrix4[] modelMatrices;
         private List<Matrix4> translationMatrixModelList = new List<Matrix4>();
-        private Vector3 lightDir = new Vector3(1, 0f, .5f);
+        private Vector3 lightDir;
         private Matrix4 lightTranslationMat4;
+
+        private UniformBuffer _uniformBuffer;
+        private readonly float TERRAIN_ROUGHNESS = 7;
 
         public Engine(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = new OpenTK.Mathematics.Vector2i(width, height), Title = title })
         {
@@ -83,17 +87,26 @@ namespace NoiseForge.Core
         }
         protected override void OnLoad()
         {
+            Random randomTreeHeightGenerator = new Random();
+            Random randomTreeLeavesGenerator = new Random();
+            Random randomTreeGenerator = new Random();
+            lightDir = new Vector3(col / 2, 1.5f * 20, row / 2);
+
 
             Image<Gray, byte> Image = CvInvoke.Imread("perlin_output.png").ToImage<Gray, byte>();
             lightTranslationMat4 = Matrix4.CreateTranslation(lightDir);
 
             _modelShader = new Shader("Shaders\\Default.vert", "Shaders\\Default.frag");
             _lightShader = new Shader("Shaders\\LightShader.vert", "Shaders\\LightShader.frag");
+            _grassShader = new Shader("Shaders\\Default.vert", "Shaders\\Default.frag");
+            _modelShader.UniformFloat("texture0", 0);
+
             texture0 = new Texture("container.jpg");
+            texture1 = new Texture("azalea_leaves.png");
 
 
 
-            int indexer = 0;
+
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(TriangleFace.Back);
@@ -104,15 +117,42 @@ namespace NoiseForge.Core
                 {
                     int column = Image.Height / this.col;
                     int row = Image.Width / this.row;
-                    double depth = (int)Image[j * row, i * column].Intensity / 20;
-
+                    double depth = (int)(Image[j * row, i * column].Intensity / 255 * TERRAIN_ROUGHNESS);
+                    Matrix4 createdTree = Matrix4.CreateScale(1);
                     for (int k = 0; k < this.depth; k++)
                     {
-                        //if (depth + k < this.depth)
-                        //{
-                        //    continue;
-                        //}
+                        #region for TreeGeneration
+                        /*
+                                                 if (depth + k < this.depth - 1)
+                                                {
+                                                    int randomHeight = randomTreeHeightGenerator.Next(5, 10);
+                                                    int TreeCreatingPermisson = randomTreeGenerator.Next(0, 255);
+                                                    if (TreeCreatingPermisson <= 3)
+                                                    {
+
+                                                        for (int x = 0; x < randomHeight; x++)
+                                                        {
+                                                            createdTree = Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(Vector3.UnitX * i) * Matrix4.CreateTranslation(Vector3.UnitZ * j) * Matrix4.CreateTranslation(Vector3.UnitY * (float)(k + x + depth));
+                                                            translationMatrixModelList.Add(createdTree);
+                                                        }
+                                                        for (int y = 0; y < 3; y++)
+                                                        {
+                                                            for (int z = 0; z < 3; z++)
+                                                            {
+
+                                                                translationMatrixModelList.Add(Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(-Vector3.UnitX) * Matrix4.CreateTranslation(-Vector3.UnitZ) * Matrix4.CreateTranslation(Vector3.UnitX * (i + z)) * Matrix4.CreateTranslation(Vector3.UnitZ * (j + y)) * Matrix4.CreateTranslation(Vector3.UnitY * (float)(k + randomHeight + depth)));
+                                                            }
+                                                        }
+
+                                                        continue;
+                                                    }
+                                                }   
+                          */
+                        #endregion
+
                         translationMatrixModelList.Add(Matrix4.CreateScale(1f) * Matrix4.CreateTranslation(Vector3.UnitX * i) * Matrix4.CreateTranslation(Vector3.UnitZ * j) * Matrix4.CreateTranslation(Vector3.UnitY * (float)(k + depth)));
+                        #region for optimization
+
                         //Matrix4[] matrix4 = translationMatrixModelList.Where(item => item == translationMatrixModelList[translationMatrixModelList.Count - 1]).ToArray();
 
 
@@ -128,63 +168,34 @@ namespace NoiseForge.Core
                         //        translationMatrixModelList.Remove(matrix4[l]);
                         //    }
                         //}
+                        #endregion
+
                     }
                 }
             }
             modelMatrices = translationMatrixModelList.ToArray();
             camera = new Camera();
-            VBOTriangle = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, VBOTriangle);
-            GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * vertices.Length, vertices, BufferUsageHint.StaticDraw);
-            VAOTriangle = GL.GenVertexArray();
-            GL.BindVertexArray(VAOTriangle);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 0);
-            GL.EnableVertexAttribArray(0);
-
-            GL.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, 8 * sizeof(float), 3 * sizeof(float));
-            GL.EnableVertexAttribArray(1);
-            GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, 8 * sizeof(float), 6 * sizeof(float));
-            GL.EnableVertexAttribArray(2);
+            blockModel = new Model<float>(vertices, 0, 3, "Vertices", 8 * sizeof(float));
+            blockModel.SetAttrib(1, 3, sizeof(float) * 8, sizeof(float) * 3);
+            blockModel.SetAttrib(2, 3, sizeof(float) * 8, sizeof(float) * 6);
 
 
-            _modelShader.UniformFloat("texture0", 0);
 
-            int index_modelShader = GL.GetUniformBlockIndex(_modelShader.programLocation, "Matrices");
-            GL.UniformBlockBinding(_modelShader.programLocation, index_modelShader, 0);
-            int index_lightShader = GL.GetUniformBlockIndex(_lightShader.programLocation, "Matrices");
-            GL.UniformBlockBinding(_modelShader.programLocation, index_lightShader, 0);
 
-            ubObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
-            GL.BufferData(BufferTarget.UniformBuffer, (4 * Vector4.SizeInBytes * 2) + Vector4.SizeInBytes * 2, IntPtr.Zero, BufferUsageHint.StaticDraw);
-            GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 0, ubObject);
+            _modelShader.SetBindingPoint("Matrices", 0);
+            _lightShader.SetBindingPoint("Matrices", 0);
+
+            _uniformBuffer = new UniformBuffer((4 * Vector4.SizeInBytes * 2) + Vector4.SizeInBytes * 2, 0);
+
             Matrix4 projection = camera.PerspectiveMatrix;
-            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
-            GL.BufferSubData(BufferTarget.UniformBuffer, 0, Vector4.SizeInBytes * 4, ref projection);
-            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
             Matrix4 viewMatrix = camera.GetViewMatrix();
-            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
-            GL.BufferSubData(BufferTarget.UniformBuffer, Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4, ref viewMatrix);
-            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
-            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
+            _uniformBuffer.BindUniformBuffer();
+            _uniformBuffer.SetMatrixBuffer(projection, 0);
+            _uniformBuffer.SetMatrixBuffer(viewMatrix, Vector4.SizeInBytes * 4);
 
-            int bufferMatrices = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, bufferMatrices);
-            GL.BufferData(BufferTarget.ArrayBuffer, 4 * Vector4.SizeInBytes * modelMatrices.Length, modelMatrices, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, 4 * Vector4.SizeInBytes, 0);
-            GL.EnableVertexAttribArray(3);
-            GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, 4 * Vector4.SizeInBytes, Vector4.SizeInBytes * 1);
-            GL.EnableVertexAttribArray(4);
-            GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, 4 * Vector4.SizeInBytes, Vector4.SizeInBytes * 2);
-            GL.EnableVertexAttribArray(5);
-            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, 4 * Vector4.SizeInBytes, Vector4.SizeInBytes * 3);
-            GL.EnableVertexAttribArray(6);
+            blockModel.BindVAO();
+            blockModel.SetMatrixBuffer(modelMatrices, 4, 3, 4, 1, "ModelMatrices", 4 * Vector4.SizeInBytes, Vector4.SizeInBytes);
 
-
-            GL.VertexAttribDivisor(3, 1);
-            GL.VertexAttribDivisor(4, 1);
-            GL.VertexAttribDivisor(5, 1);
-            GL.VertexAttribDivisor(6, 1);
 
         }
         protected override void OnRenderFrame(FrameEventArgs args)
@@ -192,20 +203,22 @@ namespace NoiseForge.Core
             GL.ClearColor(.3f, .3f, 0, 1);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-
-            GL.BindVertexArray(VAOTriangle);
-            _modelShader.Use();
-            texture0.UseTexture();
-
-            _modelShader.UniformVector("objectColor", new Vector3(.25f, .25f, .25f));
-            _modelShader.UniformVector("lightColor", new Vector3(1f, 1f, 1));
-
+            Vector3 cameraPosition = camera.Position;
             Matrix4 viewMatrix = camera.GetViewMatrix();
-            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
-            GL.BufferSubData(BufferTarget.UniformBuffer, Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4, ref viewMatrix);
-            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
 
-            int indexer = 0;
+
+            blockModel.BindVAO();
+            _modelShader.Use();
+            texture0.UseTexture2D();
+
+            _modelShader.UniformVector("objectColor", new Vector3(1f));
+            _modelShader.UniformVector("lightColor", new Vector3(1.2f));
+
+            _uniformBuffer.SetMatrixBuffer(viewMatrix, Vector4.SizeInBytes * 4);
+            _uniformBuffer.SetVector3Buffer(lightDir, Vector4.SizeInBytes * 8);
+            _uniformBuffer.SetVector3Buffer(cameraPosition, Vector4.SizeInBytes * 9);
+
+
 
             GL.DrawArraysInstanced(PrimitiveType.Triangles, 0, vertices.Length, modelMatrices.Length);
 
@@ -213,18 +226,10 @@ namespace NoiseForge.Core
 
             _lightShader.Use();
             _lightShader.UniformMatrix4("model", lightTranslationMat4);
-            GL.BindBuffer(BufferTarget.UniformBuffer, ubObject);
-            GL.BufferSubData(BufferTarget.UniformBuffer, 2 * Vector4.SizeInBytes * 4, Vector4.SizeInBytes, ref lightDir);
-            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
-            Vector3 cameraPosition = camera.Position;
-            GL.BufferSubData(BufferTarget.UniformBuffer, 2 * Vector4.SizeInBytes * 4 + Vector4.SizeInBytes, Vector4.SizeInBytes, ref cameraPosition);
-            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
             GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
 
 
-
-
-
+            Debug.WriteLine(lightDir);
             SwapBuffers();
 
         }
