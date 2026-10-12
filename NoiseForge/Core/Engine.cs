@@ -2,6 +2,7 @@
 using Emgu.CV;
 using Emgu.CV.Structure;
 using NoiseForge.Graphics;
+using NoiseForge.StoragePipeline;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -111,11 +112,17 @@ namespace NoiseForge.Core
             _treeBodyShader = new Shader("Shaders\\DefaultProgram.vert", "Shaders\\DefaultProgram.frag");
 
             _terrainTexture = new Texture(cubeFaces);
-            _leavesTexture = new Texture("azalea_leaves.png");
-            _treeBodyTexture = new Texture("TreeBody.png");
+            _leavesTexture = new Texture("Textures\\azalea_leaves.png");
+            _treeBodyTexture = new Texture("Textures\\TreeBody.png");
         }
         protected override void OnLoad()
         {
+            if (!File.Exists("Textures\\perlin_output.png"))
+            {
+                ImageLoader imageInstance = new ImageLoader("Textures\\perlin_output.png", 1024, 1024, .01f);
+
+            }
+
             Random randomTreeHeightGenerator = new Random();
             Random randomTreeLeavesGenerator = new Random();
             Random randomTreeGenerator = new Random();
@@ -144,7 +151,7 @@ namespace NoiseForge.Core
                         _blockTranslationList.Add(terrainMatrix);
                     }
 
-                    bool canSpawnTree = (i % 6 == 0 && j % 6 == 0);
+                    bool canSpawnTree = (i % 7 == 0 && j % 7 == 0);
                     int treeCreatingProbability = randomTreeGenerator.Next(0, 10);
 
                     if (canSpawnTree && treeCreatingProbability <= 4)

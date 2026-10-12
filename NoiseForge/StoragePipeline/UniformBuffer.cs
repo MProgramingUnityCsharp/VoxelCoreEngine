@@ -1,7 +1,7 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-namespace NoiseForge
+namespace NoiseForge.StoragePipeline
 {
     internal class UniformBuffer
     {
