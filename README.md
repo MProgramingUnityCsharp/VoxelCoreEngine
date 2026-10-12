@@ -1,5 +1,4 @@
 # VoxelCoreEngine
-A high-performance, custom voxel terrain engine built from scratch in C# and OpenTK, featuring procedural generation, std140 UBOs, and modern OpenGL. 🌍⚡
 # 🌍 TerraVox-GL (Custom Voxel Terrain Engine)
 
 A high-performance, custom-built voxel-based terrain engine developed from scratch in **C#** and **OpenTK (OpenGL)**. This project focuses on exploring modern graphics architecture, efficient GPU-CPU data synchronization, and procedural world-building techniques.
