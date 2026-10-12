@@ -68,7 +68,7 @@ namespace NoiseForge.Core
         private Texture _terrainTexture;
         private Texture _leavesTexture;
         private Texture _treeBodyTexture;
-        private int _depth = 10;
+        private int _depth = 4;
         private int _col = 50;
         private int _row = 50;
 
@@ -89,20 +89,12 @@ namespace NoiseForge.Core
         private readonly float TERRAIN_ROUGHNESS = 10;
         private string[] cubeFaces =
             {
-    "right.jpg",
-     "left.jpg",
-    "top.jpg",
-    "bottom.jpg",
-    "front.jpg",
-    "back.jpg"
-}; private string[] skyboxFaces =
-            {
-    "Skybox\\right.jpg",
-     "Skybox\\left.jpg",
-    "Skybox\\top.jpg",
-    "Skybox\\bottom.jpg",
-    "Skybox\\front.jpg",
-    "Skybox\\back.jpg"
+    "Textures\\right.jpg",
+     "Textures\\left.jpg",
+    "Textures\\top.jpg",
+    "Textures\\bottom.jpg",
+    "Textures\\front.jpg",
+    "Textures\\back.jpg"
 };
         private Model<float> _skyBoxBlock;
 
@@ -128,7 +120,7 @@ namespace NoiseForge.Core
             Random randomTreeLeavesGenerator = new Random();
             Random randomTreeGenerator = new Random();
 
-            Image<Gray, byte> Image = CvInvoke.Imread("perlin_output.png").ToImage<Gray, byte>();
+            Image<Gray, byte> Image = CvInvoke.Imread("Textures\\perlin_output.png").ToImage<Gray, byte>();
 
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
@@ -191,24 +183,6 @@ namespace NoiseForge.Core
                     }
                 }
             }
-            #region for optimization
-
-            //Matrix4[] matrix4 = translationMatrixModelList.Where(item => item == translationMatrixModelList[translationMatrixModelList.Count - 1]).ToArray();
-
-
-            //if (matrix4.Length > 1)
-            //{
-            //    for (int l = 0; l < matrix4.Length; l++)
-            //    {
-
-            //        if (l == 0)
-            //        {
-            //            continue;
-            //        }
-            //        translationMatrixModelList.Remove(matrix4[l]);
-            //    }
-            //}
-            #endregion
             _blockTranslations = _blockTranslationList.ToArray();
             _camera = new Camera();
             _blockTerrainModel = new Model<float>(_vertices, 0, 3, "Vertices", 8 * sizeof(float));
