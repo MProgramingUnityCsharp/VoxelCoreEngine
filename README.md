@@ -39,7 +39,6 @@ A high-performance, custom-built voxel-based terrain engine developed from scrat
 * **Procedural Noise Pipeline:** Generates organic, continuous terrain heights and structures using custom Perlin noise algorithms.
 * **Two-Pass Vegetation System:** Decouples terrain creation (Pass 1: stone/dirt/grass foundation) from decoration (Pass 2: secure tree trunk and leaf placement), preventing chunk boundary corruptions.
 * **`std140` Uniform Buffer Objects (UBOs):** Manages GPU-CPU synchronization efficiently by batching Projection and View matrices into aligned memory blocks.
-* **Dynamic Chunk Architecture:** Structures voxel data into optimized $16 \times 256 \times 16$ byte-based grids with real-time camera matrix updates in the render loop.
 
 ## 🎛️ Key Control Variables
 
