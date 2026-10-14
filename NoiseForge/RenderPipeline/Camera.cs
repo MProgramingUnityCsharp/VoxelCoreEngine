@@ -45,7 +45,7 @@ namespace VoxelCoreEngine.RenderPipeline
         private float topDot;
         private float bottomDot;
 
-        public Camera(float fieldOfView = 60, float aspect = 1.77f, float near = 0.1f, float far = 100)
+        public Camera(float fieldOfView = 60, float aspect = 1.77f, float near = 0.1f, float far = 250)
         {
             _fieldOfView = fieldOfView;
             _aspect = aspect;
@@ -67,7 +67,7 @@ namespace VoxelCoreEngine.RenderPipeline
         }
         public void InputController(KeyboardState input, MouseState mouse, FrameEventArgs e)
         {
-            SENSITIVITY = (float)Math.Pow(250, Math.Cbrt(e.Time)) * 20;
+            SENSITIVITY = (float)(0.5f / (e.Time));
             Debug.WriteLine($"Sensetivity : {SENSITIVITY}");
             UpdateVectors();
 
