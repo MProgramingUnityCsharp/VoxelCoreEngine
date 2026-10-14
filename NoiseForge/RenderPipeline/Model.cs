@@ -1,6 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-namespace NoiseForge.Graphics
+namespace VoxelCoreEngine.RenderPipeline
 {
     internal class Model<T> where T : struct
     {
@@ -32,8 +32,11 @@ namespace NoiseForge.Graphics
         }
         public void SetNewData<T2>(T2[] vertices, int index, int dimensionOfVector, int divisorValue, string BufferName, int stride = 0, int offset = 0) where T2 : struct
         {
-            _vbos.Add(BufferName, 0);
-            _vbos[BufferName] = GL.GenBuffer();
+            if (!_vbos.ContainsKey(BufferName))
+            {
+                _vbos.Add(BufferName, 0);
+                _vbos[BufferName] = GL.GenBuffer();
+            }
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vbos[BufferName]);
             GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * vertices.Length, vertices, BufferUsageHint.StreamDraw);
             GL.BindVertexArray(_vao);
@@ -43,8 +46,12 @@ namespace NoiseForge.Graphics
         }
         public void SetMatrixBuffer(Matrix4[] vertices, int divisorLoop, int index, int dimensionOfVector, int divisorValue, string BufferName, int stride = 0, int offset = 0)
         {
-            _vbos.Add(BufferName, 0);
-            _vbos[BufferName] = GL.GenBuffer();
+            if (!_vbos.ContainsKey(BufferName))
+            {
+                _vbos.Add(BufferName, 0);
+                _vbos[BufferName] = GL.GenBuffer();
+            }
+
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vbos[BufferName]);
             GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * Vector4.SizeInBytes * 4, vertices, BufferUsageHint.StreamDraw);
             GL.BindVertexArray(_vao);

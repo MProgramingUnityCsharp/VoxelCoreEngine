@@ -1,6 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-namespace NoiseForge.Graphics
+namespace VoxelCoreEngine.RenderPipeline
 {
     internal class Shader
     {

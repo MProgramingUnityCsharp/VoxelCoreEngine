@@ -1,7 +1,7 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using StbImageSharp;
 
-namespace NoiseForge.Graphics
+namespace VoxelCoreEngine.RenderPipeline
 {
     internal class Texture
     {

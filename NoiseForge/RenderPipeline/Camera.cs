@@ -1,14 +1,14 @@
 ﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using System.Diagnostics;
 
 namespace VoxelCoreEngine.RenderPipeline
 {
     internal class Camera
     {
         private float SPEED = 10f;
-        private float SENSITIVITY = 250;
-
+        private float SENSITIVITY;
         private float _fieldOfView;
         private float _aspect;
         public float _near;
@@ -67,6 +67,9 @@ namespace VoxelCoreEngine.RenderPipeline
         }
         public void InputController(KeyboardState input, MouseState mouse, FrameEventArgs e)
         {
+            SENSITIVITY = (float)Math.Pow(250, Math.Cbrt(e.Time)) * 20;
+            Debug.WriteLine($"Sensetivity : {SENSITIVITY}");
+            UpdateVectors();
 
             if (input.IsKeyDown(Keys.W) || input.IsKeyDown(Keys.A) || input.IsKeyDown(Keys.D) || input.IsKeyDown(Keys.S) || input.IsKeyDown(Keys.E) || input.IsKeyDown(Keys.Q) || mouse.IsButtonDown(MouseButton.Left))
             {
@@ -77,9 +80,10 @@ namespace VoxelCoreEngine.RenderPipeline
                 CameraMovingState = false;
             }
 
-
-            CreateFrustumFromCamera();
-
+            if (CameraMovingState)
+            {
+                CreateFrustumFromCamera();
+            }
 
             if (input.IsKeyDown(Keys.W))
             {
@@ -141,7 +145,7 @@ namespace VoxelCoreEngine.RenderPipeline
             }
 
 
-            UpdateVectors();
+
 
 
         }
@@ -149,9 +153,9 @@ namespace VoxelCoreEngine.RenderPipeline
         private void UpdateVectors()
         {
 
-            _front.X += (float)(Math.Cos(MathHelper.DegreesToRadians(Pitch)) * Math.Cos(MathHelper.DegreesToRadians(yaw)));
-            _front.Y += (float)(Math.Sin(MathHelper.DegreesToRadians(Pitch)));
-            _front.Z += (float)(Math.Cos(MathHelper.DegreesToRadians(Pitch)) * Math.Sin(MathHelper.DegreesToRadians(yaw)));
+            _front.X = (float)(Math.Cos(MathHelper.DegreesToRadians(Pitch)) * Math.Cos(MathHelper.DegreesToRadians(yaw)));
+            _front.Y = (float)(Math.Sin(MathHelper.DegreesToRadians(Pitch)));
+            _front.Z = (float)(Math.Cos(MathHelper.DegreesToRadians(Pitch)) * Math.Sin(MathHelper.DegreesToRadians(yaw)));
 
             _front.Normalize();
 
