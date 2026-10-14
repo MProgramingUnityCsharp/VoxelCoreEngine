@@ -7,6 +7,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace NoiseForge.Core
@@ -305,19 +306,19 @@ namespace NoiseForge.Core
 
             if (keyboardInput.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up))
             {
-                _lightDir += Vector3.UnitZ * .01f;
+                _lightDir += Vector3.UnitZ * 5 * (float)args.Time;
             }
             if (keyboardInput.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down))
             {
-                _lightDir -= Vector3.UnitZ * .01f;
+                _lightDir -= Vector3.UnitZ * 5 * (float)args.Time;
             }
             if (keyboardInput.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left))
             {
-                _lightDir += Vector3.UnitX * .01f;
+                _lightDir += Vector3.UnitX * 5 * (float)args.Time;
             }
             if (keyboardInput.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right))
             {
-                _lightDir -= Vector3.UnitX * .01f;
+                _lightDir -= Vector3.UnitX * 5 * (float)args.Time;
             }
 
 
