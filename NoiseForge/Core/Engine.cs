@@ -100,14 +100,13 @@ namespace NoiseForge.Core
         private Model<float> _groundTerrainModel;
         private List<Matrix4> _blockLeavesListTemp;
         private Task<List<Matrix4>> _blockTreeBodiesFilterTask;
-        private bool firstRun = true;
         private Task<List<Matrix4>> _groundTranslationTask;
         private Task<List<Matrix4>> _surfaceTranslationTask;
         private Task<List<Matrix4>> _blockLeavesTask;
 
         public Engine(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = new OpenTK.Mathematics.Vector2i(width, height), Title = title })
         {
-            TERRAIN_ROUGHNESS = 4;
+            TERRAIN_ROUGHNESS = 15;
             _lightDir = new Vector3(_col / 2, 1.5f * 50, _row / 2);
 
 
@@ -303,6 +302,14 @@ namespace NoiseForge.Core
                 surfaceBuffer = FilterFrustomView(_surfaceVector3List);
                 leavesBuffer = FilterFrustomView(_leavesVector3List);
                 treeBodiesBuffer = FilterFrustomView(_treeBodyVector3List);
+                _blockTerrainModel.BindVAO();
+                _blockTerrainModel.SetMatrixBuffer(groundBuffer.ToArray(), 4, 3, 4, 1, "ModelMatrices", 4 * Vector4.SizeInBytes, Vector4.SizeInBytes);
+                _groundTerrainModel.BindVAO();
+                _groundTerrainModel.SetMatrixBuffer(surfaceBuffer.ToArray(), 4, 3, 4, 1, "ModelMatrices", 4 * Vector4.SizeInBytes, Vector4.SizeInBytes);
+                _blockLeavesModel.BindVAO();
+                _blockLeavesModel.SetMatrixBuffer(leavesBuffer.ToArray(), 4, 3, 4, 1, "ModelMatrices", 4 * Vector4.SizeInBytes, Vector4.SizeInBytes);
+                _blockTreeBodiesModel.BindVAO();
+                _blockTreeBodiesModel.SetMatrixBuffer(treeBodiesBuffer.ToArray(), 4, 3, 4, 1, "ModelMatrices", 4 * Vector4.SizeInBytes, Vector4.SizeInBytes);
             }
             GL.ClearColor(.78f, .86f, 1.0f, 0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -316,36 +323,25 @@ namespace NoiseForge.Core
             _modelShader.Use();
             _groundTexture.UseTexture2D();
 
-
-
-
-
             _blockTerrainModel.BindVAO();
-            _blockTerrainModel.SetMatrixBuffer(groundBuffer.ToArray(), 4, 3, 4, 1, "ModelMatrices", 4 * Vector4.SizeInBytes, Vector4.SizeInBytes);
             GL.DrawArraysInstanced(PrimitiveType.Triangles, 0, _vertices.Length, groundBuffer.Count);
-
-
-
 
 
             _groundTerrainModel.BindVAO();
             _terrainTexture.UseCubemap();
             _groundlShader.Use();
-            _groundTerrainModel.SetMatrixBuffer(surfaceBuffer.ToArray(), 4, 3, 4, 1, "ModelMatrices", 4 * Vector4.SizeInBytes, Vector4.SizeInBytes);
             GL.DrawArraysInstanced(PrimitiveType.Triangles, 0, _vertices.Length, surfaceBuffer.Count);
 
 
             _blockLeavesModel.BindVAO();
             _grassShader.Use();
             _leavesTexture.UseTexture2D();
-            _blockLeavesModel.SetMatrixBuffer(leavesBuffer.ToArray(), 4, 3, 4, 1, "ModelMatrices", 4 * Vector4.SizeInBytes, Vector4.SizeInBytes);
             GL.DrawArraysInstanced(PrimitiveType.Triangles, 0, _vertices.Length, leavesBuffer.Count);
 
 
             _blockTreeBodiesModel.BindVAO();
             _treeBodyShader.Use();
             _treeBodyTexture.UseTexture2D();
-            _blockTreeBodiesModel.SetMatrixBuffer(treeBodiesBuffer.ToArray(), 4, 3, 4, 1, "ModelMatrices", 4 * Vector4.SizeInBytes, Vector4.SizeInBytes);
 
             GL.DrawArraysInstanced(PrimitiveType.Triangles, 0, _vertices.Length, treeBodiesBuffer.Count);
 

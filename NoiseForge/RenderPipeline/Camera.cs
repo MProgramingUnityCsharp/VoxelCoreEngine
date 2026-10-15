@@ -45,7 +45,7 @@ namespace VoxelCoreEngine.RenderPipeline
         private float topDot;
         private float bottomDot;
 
-        public Camera(float fieldOfView = 60, float aspect = 1.77f, float near = 0.1f, float far = 250)
+        public Camera(float fieldOfView = 60, float aspect = 1.77f, float near = 0.1f, float far = 50)
         {
             _fieldOfView = fieldOfView;
             _aspect = aspect;
@@ -56,8 +56,8 @@ namespace VoxelCoreEngine.RenderPipeline
             Position = new Vector3(0, 20, 5);
             PerspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(fieldOfView), aspect, near, far);
             GetViewMatrix();
-
             CreateFrustumFromCamera();
+
         }
 
         public Matrix4 GetViewMatrix()
@@ -74,16 +74,15 @@ namespace VoxelCoreEngine.RenderPipeline
             if (input.IsKeyDown(Keys.W) || input.IsKeyDown(Keys.A) || input.IsKeyDown(Keys.D) || input.IsKeyDown(Keys.S) || input.IsKeyDown(Keys.E) || input.IsKeyDown(Keys.Q) || mouse.IsButtonDown(MouseButton.Left))
             {
                 CameraMovingState = true;
+                CreateFrustumFromCamera();
             }
             else
             {
                 CameraMovingState = false;
             }
 
-            if (CameraMovingState)
-            {
-                CreateFrustumFromCamera();
-            }
+
+
 
             if (input.IsKeyDown(Keys.W))
             {
@@ -171,7 +170,6 @@ namespace VoxelCoreEngine.RenderPipeline
         }
         void CreateFrustumFromCamera()
         {
-
             float halfVSide = _far * (float)Math.Tan(MathHelper.DegreesToRadians(_fieldOfView) * .5f);
             float halfHSide = halfVSide * _aspect;
             Vector3 frontMultFar = _far * _front;
@@ -209,6 +207,7 @@ namespace VoxelCoreEngine.RenderPipeline
 
         public bool CheckFrustomView(Vector3 objectTranslation)
         {
+
             farDot = Vector3.Dot(_farFace.Normal, objectTranslation - _farFace.Point);
             nearDot = Vector3.Dot(_nearFace.Normal, objectTranslation - _nearFace.Point);
             rightDot = Vector3.Dot(_rightFace.Normal, objectTranslation - _rightFace.Point);
