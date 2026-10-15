@@ -59,7 +59,8 @@ namespace NoiseForge.Core
     -0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f,    0.0f, 0.0f,
 };
 
-
+        private int _col = 2000;
+        private int _row = 2000;
         private Camera _camera;
         private Model<float> _blockTerrainModel;
         private Model<float> _blockLeavesModel;
@@ -72,8 +73,7 @@ namespace NoiseForge.Core
         private Texture _groundTexture;
         private Texture _leavesTexture;
         private Texture _treeBodyTexture;
-        private int _col = 1000;
-        private int _row = 1000;
+
 
         private List<Matrix4> _groundTranslationList = new List<Matrix4>();
         private List<Matrix4> _blockLeavesList = new List<Matrix4>();
@@ -86,7 +86,7 @@ namespace NoiseForge.Core
         private UniformBuffer _lightBuffer;
         private UniformBuffer _projectionBuffer;
         private Model<float> _blockTreeBodiesModel;
-        private readonly float TERRAIN_ROUGHNESS = 13;
+        private readonly float TERRAIN_ROUGHNESS = 20;
         private string[] cubeFaces =
             {
     "Textures\\right.jpg",
@@ -96,17 +96,9 @@ namespace NoiseForge.Core
     "Textures\\front.jpg",
     "Textures\\back.jpg"
 };
-        private Model<float> _skyBoxBlock;
         private Model<float> _groundTerrainModel;
-        private List<Matrix4> _blockLeavesListTemp;
-        private Task<List<Matrix4>> _blockTreeBodiesFilterTask;
-        private Task<List<Matrix4>> _groundTranslationTask;
-        private Task<List<Matrix4>> _surfaceTranslationTask;
-        private Task<List<Matrix4>> _blockLeavesTask;
-
         public Engine(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = new OpenTK.Mathematics.Vector2i(width, height), Title = title })
         {
-            TERRAIN_ROUGHNESS = 15;
             _lightDir = new Vector3(_col / 2, 1.5f * 50, _row / 2);
 
 
@@ -274,28 +266,6 @@ namespace NoiseForge.Core
         protected override void OnRenderFrame(FrameEventArgs args)
         {
 
-            //_groundTranslationTask = Task.Run(() =>
-            //{
-            //    return FilterFrustomView(_groundVector3List);
-
-            //});
-            //_blockLeavesTask = Task.Run(() =>
-            //{
-            //    return FilterFrustomView(_leavesVector3List);
-            //});
-            //_surfaceTranslationTask = Task.Run(() =>
-            //{
-            //    return FilterFrustomView(_surfaceVector3List);
-            //});
-            //_blockTreeBodiesFilterTask = Task.Run(() =>
-            //{
-            //    return FilterFrustomView(_treeBodyVector3List);
-            //});
-
-            //groundBuffer = _groundTranslationTask.Result;
-            //surfaceBuffer = _surfaceTranslationTask.Result;
-            //leavesBuffer = _blockLeavesTask.Result;
-            //treeBodiesBuffer = _blockTreeBodiesFilterTask.Result;
             if (_camera.CameraMovingState)
             {
                 groundBuffer = FilterFrustomView(_groundVector3List);
@@ -311,6 +281,7 @@ namespace NoiseForge.Core
                 _blockTreeBodiesModel.BindVAO();
                 _blockTreeBodiesModel.SetMatrixBuffer(treeBodiesBuffer.ToArray(), 4, 3, 4, 1, "ModelMatrices", 4 * Vector4.SizeInBytes, Vector4.SizeInBytes);
             }
+
             GL.ClearColor(.78f, .86f, 1.0f, 0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 

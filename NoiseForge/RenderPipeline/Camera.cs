@@ -45,7 +45,7 @@ namespace VoxelCoreEngine.RenderPipeline
         private float topDot;
         private float bottomDot;
 
-        public Camera(float fieldOfView = 60, float aspect = 1.77f, float near = 0.1f, float far = 50)
+        public Camera(float fieldOfView = 60, float aspect = 1.77f, float near = 0.1f, float far = 200)
         {
             _fieldOfView = fieldOfView;
             _aspect = aspect;
